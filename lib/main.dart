@@ -1,8 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:todo_app_01f/database/app_database.dart';
 import 'package:todo_app_01f/home/home_page.dart';
 
-void main() {
-  runApp(const MyApp());
+late final AppDatabase database;
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  database = AppDatabase();
+
+  runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
