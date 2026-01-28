@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:todo_app_01f/database/app_database.dart';
+import 'package:todo_app_01f/details/detail_page.dart';
 import 'package:todo_app_01f/home/home_state.dart';
 import 'package:todo_app_01f/home/home_view_model.dart';
 import 'package:todo_app_01f/main.dart';
-import 'package:todo_app_01f/mock_database.dart';
 import 'package:todo_app_01f/todo_repository.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -18,7 +18,7 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
- // late final HomeCubit cubit;
+  late final HomeCubit cubit;
 
   @override
   void initState() {
@@ -26,45 +26,66 @@ class _MyHomePageState extends State<MyHomePage> {
    // final todo = Todo(id: id, title: title, isFinished: isFinished, date: date)
   //  final db = MockDatabase();
   //  final repo = TodoRepositoryImpl(db);
-  //  final vm = HomeViewModel(repo: repo);
-  //  cubit = HomeCubit(vm: vm)..init();
+    final vm = HomeViewModel(repo: repository);
+    cubit = HomeCubit(vm: vm)..init();
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: Text("Todi List"),
-      ),
-      body: FutureBuilder(
-        future: database.getTodoList(), 
-        builder: (context, snapshot) {
-          if (!snapshot.hasData) {
-            return Center(child: CircularProgressIndicator());
-          }
+Widget build(BuildContext context) {
+ return BlocProvider.value(
+   value: cubit,
+   child: BlocBuilder<HomeCubit, HomeState>(
+     builder: (context, state) {
+       if (state.isLoading) {
+         return const Scaffold(
+           body: Center(child: CircularProgressIndicator()),
+         );
+       }
 
-          final todoList = snapshot.data;
 
-          return ListView.builder(
-            itemCount: todoList?.length,
-            itemBuilder: (context, index) {
-              return ListTile(
-                title: Text(todoList![index].title),
+       if (state.error != null) {
+         return Scaffold(
+           appBar: AppBar(title: const Text("Todo List")),
+           body: Center(child: Text("Ошибка: ${state.error}")),
+         );
+       }
+
+
+       return Scaffold(
+         appBar: AppBar(
+           backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+           title: const Text("Todo List"),
+         ),
+         body: ListView.builder(
+           itemCount: state.items.length,
+           itemBuilder: (context, index) {
+             final item = state.items[index];
+             return ListTile(
+              title: Text(item.title),
+              onTap: () async {
+                    final bool? needRefresh = await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => DetailPage(todo: item),
+                      ),
+                    );
+                    if (needRefresh == true) {
+                      setState(() {
+                        cubit.init();
+                      });
+                    }
+                  },
               );
-            }
-            );
-        }
-        ),
-        floatingActionButton: FloatingActionButton(
-          onPressed: () => { 
-            database.insertTodo(TodosCompanion.insert(title: "Test", date: DateTime.now().toString())),
-            setState(() {
-              
-            })
-          },
-          child: const Icon(Icons.add),
-          ),
-    );
-  }
+           },
+         ),
+         floatingActionButton: FloatingActionButton(
+           onPressed: () => context.read<HomeCubit>().addTest(),
+           child: const Icon(Icons.add),
+         ),
+       );
+  
+   },
+   ),
+ );
+}
 }

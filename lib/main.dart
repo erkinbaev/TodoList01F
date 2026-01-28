@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:todo_app_01f/database/app_database.dart';
 import 'package:todo_app_01f/home/home_page.dart';
+import 'package:todo_app_01f/todo_repository.dart';
 
 late final AppDatabase database;
+late final TodoRepository repository;
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   database = AppDatabase();
+  repository = TodoRepositoryImpl(database);
 
   runApp(MyApp());
 }

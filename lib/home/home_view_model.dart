@@ -1,7 +1,7 @@
 
 
+import 'package:todo_app_01f/database/app_database.dart';
 import 'package:todo_app_01f/home/home_state.dart';
-import 'package:todo_app_01f/todo.dart';
 import 'package:todo_app_01f/todo_repository.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -11,6 +11,10 @@ class HomeViewModel {
   HomeViewModel({required this.repo});
 
   Future<List<Todo>> loadList() => repo.fetchList();
+
+  Future<int> addTodo({required String title, required String date}) {
+    return repo.addTodo(title: title, date: date);
+  } 
 }
 
 class HomeCubit extends Cubit<HomeState> {
@@ -35,4 +39,12 @@ class HomeCubit extends Cubit<HomeState> {
   List<Todo> _filterByDate(List<Todo> items) {
     return [...items]..sort((a, b) => b.date.compareTo(a.date));
   }
+
+  Future<void> addTest() async {
+    await vm.addTodo(title: "Test", date: DateTime.now().toString());
+    await init();
+  }
+
+
+
 }

@@ -13,13 +13,27 @@ class AppDatabase extends _$AppDatabase {
   @override
   int get schemaVersion => 1;
 
+  //CREATE
   Future<int> insertTodo(TodosCompanion todo) {
    return into(todos).insert(todo);
   }
 
+  //READ
   Future<List<Todo>> getTodoList() {
     return select(todos).get();
   }
+
+  //UPDATE
+  Future<int> updateTodo(int id, TodosCompanion data) {
+    return (update(todos)..where((t) => t.id.equals(id))).write(data);
+  }
+
+  //DELETE
+  Future<int> deleteTodo(int id) {
+    return (delete(todos)..where((t) => t.id.equals(id))).go();
+  }
+
+  
 }
 
 LazyDatabase _openConnection() {
