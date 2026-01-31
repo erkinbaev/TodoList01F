@@ -4,14 +4,16 @@ import 'package:todo_app_01f/details/detail_page.dart';
 import 'package:todo_app_01f/home/home_state.dart';
 import 'package:todo_app_01f/home/home_view_model.dart';
 import 'package:todo_app_01f/main.dart';
+import 'package:todo_app_01f/settings/settings_page.dart';
 import 'package:todo_app_01f/todo_repository.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
+final bool isDarkTheme;
+  final ValueChanged<bool> onThemeChanged;
 
- 
-  final String title;
+  const MyHomePage({super.key, required this.isDarkTheme, required this.onThemeChanged});
 
   @override
   State<MyHomePage> createState() => _MyHomePageState();
@@ -19,6 +21,9 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   late final HomeCubit cubit;
+  late SharedPreferences prefs;
+  
+
 
   @override
   void initState() {
@@ -28,6 +33,23 @@ class _MyHomePageState extends State<MyHomePage> {
   //  final repo = TodoRepositoryImpl(db);
     final vm = HomeViewModel(repo: repository);
     cubit = HomeCubit(vm: vm)..init();
+    loadValue();
+  }
+
+  Future<void> loadValue() async {
+    prefs = await SharedPreferences.getInstance();
+
+    print(prefs.getBool('isDarkTheme'));
+    print(prefs.getInt('progress'));
+    print(prefs.getString('username'));
+  }
+
+  Future<void> setValues() async {
+    prefs = await SharedPreferences.getInstance();
+
+    prefs.setBool('isDarkTheme', false);
+    prefs.setInt('progress', 60);
+    prefs.setString('username', 'Nursultan');
   }
 
   @override
@@ -55,6 +77,15 @@ Widget build(BuildContext context) {
          appBar: AppBar(
            backgroundColor: Theme.of(context).colorScheme.inversePrimary,
            title: const Text("Todo List"),
+           actions: [
+            IconButton(onPressed: () {
+              Navigator.push(context, MaterialPageRoute(builder: (_)  => SettingsPage(
+                isDarkTheme: widget.isDarkTheme,
+                onThemeChanged: widget.onThemeChanged,
+              )));
+            }, 
+            icon: Icon(Icons.settings))
+           ],
          ),
          body: ListView.builder(
            itemCount: state.items.length,
@@ -80,6 +111,7 @@ Widget build(BuildContext context) {
          ),
          floatingActionButton: FloatingActionButton(
            onPressed: () => context.read<HomeCubit>().addTest(),
+        //  onPressed: () => setValues(),
            child: const Icon(Icons.add),
          ),
        );
