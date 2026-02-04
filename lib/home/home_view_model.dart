@@ -41,8 +41,22 @@ class HomeCubit extends Cubit<HomeState> {
   }
 
   Future<void> addTest() async {
-    await vm.addTodo(title: "Test", date: DateTime.now().toString());
-    await init();
+    final String title = "";
+    final String date = DateTime.now().toString();
+
+    try {
+      if(title.isEmpty) {
+        throw Exception("Empty field");
+      } 
+
+      await vm.addTodo(title: "Test", date: DateTime.now().toString());
+      await init();
+
+    } catch (e) {
+      emit(state.copyWith(isLoading: false, error: null));
+      emit(state.copyWith(isLoading: false, error: e.toString()));
+      print(e);
+    }
   }
 
 

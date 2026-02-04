@@ -56,22 +56,25 @@ class _MyHomePageState extends State<MyHomePage> {
 Widget build(BuildContext context) {
  return BlocProvider.value(
    value: cubit,
-   child: BlocBuilder<HomeCubit, HomeState>(
-     builder: (context, state) {
-       if (state.isLoading) {
-         return const Scaffold(
-           body: Center(child: CircularProgressIndicator()),
-         );
-       }
+    child: BlocConsumer<HomeCubit, HomeState>(
+      listenWhen: (prev, curr) => prev.error != curr.error && curr.error != null,
+      listener: (context, state) {
+        // убрать предыдущий snackbar, чтобы не накапливались
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
 
-
-       if (state.error != null) {
-         return Scaffold(
-           appBar: AppBar(title: const Text("Todo List")),
-           body: Center(child: Text("Ошибка: ${state.error}")),
-         );
-       }
-
+        // ScaffoldMessenger.of(context).showSnackBar(
+        //   SnackBar(
+        //     content: Text("Вы не написали название задачи!"),
+        //   ),
+        // );
+        showAppSnackBar(context, text: "Вы не написали название задачи!", backgroundColor: Colors.green);
+      },
+      builder: (context, state) {
+        if (state.isLoading) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
 
        return Scaffold(
          appBar: AppBar(
@@ -120,4 +123,43 @@ Widget build(BuildContext context) {
    ),
  );
 }
+
+void showAppSnackBar(
+  BuildContext context, {
+  required String text,
+  Color? backgroundColor,
+  IconData? icon,
+  VoidCallback? onRetry,
+  String retryText = "Повторить",
+}) {
+  final messenger = ScaffoldMessenger.of(context);
+
+  messenger.hideCurrentSnackBar();
+  messenger.showSnackBar(
+    SnackBar(
+      content: Row(
+        children: [
+          if (icon != null) ...[
+            Icon(icon, color: Colors.white),
+            const SizedBox(width: 12),
+          ],
+          Expanded(child: Text(text)),
+        ],
+      ),
+      backgroundColor: backgroundColor,
+      behavior: SnackBarBehavior.floating,
+      margin: const EdgeInsets.all(12),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+      duration: const Duration(seconds: 3),
+      action: onRetry == null
+          ? null
+          : SnackBarAction(
+              label: retryText,
+              onPressed: onRetry,
+              textColor: Colors.white,
+            ),
+    ),
+  );
+}
+
 }
