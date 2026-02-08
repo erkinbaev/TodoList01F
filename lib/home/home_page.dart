@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:todo_app_01f/add/add_page.dart';
 import 'package:todo_app_01f/database/app_database.dart';
 import 'package:todo_app_01f/details/detail_page.dart';
 import 'package:todo_app_01f/home/home_state.dart';
 import 'package:todo_app_01f/home/home_view_model.dart';
+import 'package:todo_app_01f/home/todo_tile.dart';
 import 'package:todo_app_01f/main.dart';
 import 'package:todo_app_01f/settings/settings_page.dart';
 import 'package:todo_app_01f/todo_repository.dart';
@@ -54,74 +56,95 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
 Widget build(BuildContext context) {
- return BlocProvider.value(
+  return BlocProvider.value(
    value: cubit,
-    child: BlocConsumer<HomeCubit, HomeState>(
-      listenWhen: (prev, curr) => prev.error != curr.error && curr.error != null,
-      listener: (context, state) {
-        // убрать предыдущий snackbar, чтобы не накапливались
-        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+   child: BlocBuilder<HomeCubit, HomeState>(
+     builder: (context, state) {
+       if (state.isLoading) {
+         return const Scaffold(
+           body: Center(child: CircularProgressIndicator()),
+         );
+       }
 
-        // ScaffoldMessenger.of(context).showSnackBar(
-        //   SnackBar(
-        //     content: Text("Вы не написали название задачи!"),
-        //   ),
-        // );
-        showAppSnackBar(context, text: "Вы не написали название задачи!", backgroundColor: Colors.green);
-      },
-      builder: (context, state) {
-        if (state.isLoading) {
-          return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
-          );
-        }
+       if (state.error != null) {
+         return Scaffold(
+           appBar: AppBar(title: const Text("Todo List")),
+           body: Center(child: Text("Ошибка: ${state.error}")),
+         );
+       }
 
        return Scaffold(
-         appBar: AppBar(
-           backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-           title: const Text("Todo List"),
-           actions: [
-            IconButton(onPressed: () {
-              Navigator.push(context, MaterialPageRoute(builder: (_)  => SettingsPage(
-                isDarkTheme: widget.isDarkTheme,
-                onThemeChanged: widget.onThemeChanged,
-              )));
-            }, 
-            icon: Icon(Icons.settings))
-           ],
-         ),
-         body: ListView.builder(
-           itemCount: state.items.length,
-           itemBuilder: (context, index) {
-             final item = state.items[index];
-             return ListTile(
-              title: Text(item.title),
-              onTap: () async {
-                    final bool? needRefresh = await Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => DetailPage(todo: item),
-                      ),
-                    );
-                    if (needRefresh == true) {
-                      setState(() {
-                        cubit.init();
-                      });
-                    }
+        body: SafeArea(
+          child: Padding(padding: const EdgeInsets.symmetric(horizontal: 18),
+          child: Column(
+            children: [
+              const SizedBox(height: 10),
+              const Text(
+                'Мои задачи',
+                style: TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black87,
+                ),
+              ),
+              const SizedBox(height: 10),
+              Container(height: 1, color: Colors.black26),
+              const SizedBox(height: 18),
+
+              Expanded(
+                child: ListView.separated(
+                  itemCount: state.items.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 14),
+                  itemBuilder: (context, index) {
+                    final todoItem = state.items[index];
+                    return TodoTile(
+                      title: todoItem.title, 
+                      dateText: todoItem.date, 
+                      isDone: todoItem.isFinished, 
+                      onChanged: (v) {
+                       // setState(() => todoItem.isFinished = v;
+                      }
+                      );
                   },
-              );
-           },
-         ),
-         floatingActionButton: FloatingActionButton(
-           onPressed: () => context.read<HomeCubit>().addTest(),
-        //  onPressed: () => setValues(),
-           child: const Icon(Icons.add),
-         ),
+                )
+                ),
+                const SizedBox(height: 14),
+              SizedBox(
+                width: double.infinity,
+                height: 60,
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    _navigateToAddPage(context);
+                  },
+                  icon: const Icon(Icons.add, size: 26),
+                  label: const Text(
+                    'Добавить задачу',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF0A72FF),
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    elevation: 0,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+            ],
+          ),
+          )
+          ),
        );
   
    },
    ),
  );
+}
+
+void _navigateToAddPage(BuildContext context) {
+  Navigator.of(context).push(MaterialPageRoute(builder: (_) => const AddPage()));
 }
 
 void showAppSnackBar(
